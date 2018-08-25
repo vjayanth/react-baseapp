@@ -8,57 +8,70 @@
 
 import React, { Component } from "react";
 import {
-  Platform,
   StyleSheet,
   Text,
   View,
-  TextInput,
   ScrollView,
-  Image,
-  Picker,
-  Button,
   ActivityIndicator,
-  PermissionsAndroid,
-  ProgressBarAndroid,
-  WebView
+  PermissionsAndroid
 } from "react-native";
+import {
+  Container,
+  Header,
+  Tab,
+  Tabs,
+  Left,
+  Title,
+  Button,
+  Icon,
+  Body,
+  Right,
+  List,
+  ListItem
+} from "native-base";
 import Contacts from "react-native-contacts";
+import { createStackNavigator } from "react-navigation";
 
 function AlignList(props) {
   const contacts = props.contacts;
   const list = contacts.map(
     (u, i) =>
       u.phoneNumbers.length > 0 && (
-        <View key={i} style={{ flex: 2, flexDirection: "row" }}>
-          <Text style={{ flex: 1, color: "blue", fontSize: 20 }}>
-            {u.givenName}
-          </Text>
-          <Text style={{ flex: 1, color: "blue", fontSize: 20 }}>
-            {u.phoneNumbers[0].number}
-          </Text>
-        </View>
+        <ListItem key={i} style={{ flex: 2, flexDirection: "row" }}>
+          <Left>
+            <Text>{u.givenName}</Text>
+          </Left>
+          <Right style={{ flex: 1 }}>
+            <Text>{u.phoneNumbers[0].number}</Text>
+          </Right>
+        </ListItem>
       )
   );
   return list;
 }
-
-export class Greeting extends Component {
+class DetailsScreen extends React.Component {
+  render() {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <Text>Details Screen</Text>
+      </View>
+    );
+  }
+}
+export class Greeting extends React.Component {
   constructor(props) {
     super(props);
     this.state = { grantedList: false, contacts: [], loader: false };
-    this.bindText = this.bindText.bind(this);
-    this.displayList = this.displayList.bind(this);
+    this.getContacts = this.getContacts.bind(this);
   }
-  displayList() {
-    this.setState({ grantedList: true });
+  componentDidMount() {
+    this.getContacts();
   }
-  async bindText() {
+  async getContacts() {
     try {
-      console.log("in");
       const granted = await PermissionsAndroid.request(
         "android.permission.READ_CONTACTS"
       );
-      console.log(granted);
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
         this.setState({ loader: true });
         Contacts.getAll((err, contacts) => {
@@ -73,57 +86,71 @@ export class Greeting extends Component {
     } catch (err) {
       console.warn(err);
     }
-    // this.setState({ text: "alpha" });
   }
+
   render() {
     return (
-      <View>
-        <Button
-          onPress={this.bindText}
-          title="Get Contact List"
-          color="#841584"
-          accessibilityLabel="Learn more about this purple button"
-        />
-        <View>
-          {this.state.loader && (
-            <ActivityIndicator size="large" color="#0000ff" />
-          )}
-        </View>
-        <View>
-          {this.state.grantedList && (
-            <AlignList contacts={this.state.contacts} />
-          )}
-        </View>
-      </View>
+      <Container>
+        <Header hasTabs>
+          <Left>
+            {/* <Button transparent>
+               <Icon name='arrow-back' />
+            </Button> */}
+          </Left>
+          <Body>
+            <Title>First App</Title>
+          </Body>
+          <Right>
+            <Button transparent>
+              <Icon name="menu" />
+            </Button>
+          </Right>
+        </Header>
+        <Tabs>
+          <Tab heading="Contacts">
+            <Container>
+              <ScrollView>
+                {this.state.loader && (
+                  <ActivityIndicator size="large" color="#0000ff" />
+                )}
+                <Button
+                  full
+                  rounded
+                  success
+                  onPress={() => this.props.navigation.navigate("Details")}
+                >
+                  <Text>Details</Text>
+                </Button>
+                <List>
+                  {this.state.grantedList && (
+                    <AlignList contacts={this.state.contacts} />
+                  )}
+                </List>
+              </ScrollView>
+            </Container>
+          </Tab>
+          <Tab heading="SMS">
+            <Text>Work is under progress</Text>
+          </Tab>
+        </Tabs>
+      </Container>
     );
   }
 }
 
-export default class App extends Component {
+const RootStack = createStackNavigator(
+  {
+    Home: Greeting,
+    Details: DetailsScreen
+  },
+  {
+    initialRouteName: "Home",
+    headerMode: "none"
+  }
+);
+
+export default class App extends React.Component {
   render() {
-    return (
-      <ScrollView>
-        <Greeting />
-      </ScrollView>
-    );
+    return <RootStack />;
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F5FCFF"
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: "center",
-    margin: 10
-  },
-  instructions: {
-    textAlign: "center",
-    color: "#333333",
-    marginBottom: 5
-  }
-});
